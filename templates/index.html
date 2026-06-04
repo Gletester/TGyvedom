@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Спецификации — загрузка</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 720px;
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .upload-area {
+            border: 2px dashed #bbb;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            transition: border-color 0.2s;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+        .upload-area:hover { border-color: #4f46e5; }
+        .upload-area.dragover { border-color: #4f46e5; background: #f5f3ff; }
+        .upload-area input[type="file"] { display: none; }
+        .upload-icon { font-size: 48px; margin-bottom: 12px; }
+        .upload-btn {
+            display: inline-block;
+            background: #4f46e5;
+            color: #fff;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .upload-btn:hover { background: #4338ca; }
+        .flash {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .flash.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .flash.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .file-list {
+            list-style: none;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 16px;
+        }
+        .file-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+        .file-list a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+        .file-list a:hover { text-decoration: underline; }
+        .file-size { color: #999; font-size: 13px; }
+        .empty { color: #999; font-size: 14px; text-align: center; padding: 20px 0; }
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>&#128196; Спецификации на закупку</h1>
+        <p class="subtitle">Загрузи файл — Игорь получит уведомление в Telegram</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="post" action="/upload" enctype="multipart/form-data" id="upload-form">
+            <div class="upload-area" id="drop-zone">
+                <div class="upload-icon">&#128229;</div>
+                <p style="margin-bottom: 16px; color: #666;">Перетащи файл сюда или нажми для выбора</p>
+                <input type="file" name="file" id="file-input" required>
+                <button type="submit" class="upload-btn" id="submit-btn">&#9654; Загрузить спецификацию</button>
+            </div>
+        </form>
+
+        <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Загруженные файлы</h2>
+        {% if files %}
+        <ul class="file-list">
+            {% for f in files %}
+            <li>
+                <a href="{{ base_url }}/files/{{ f.name }}" target="_blank">&#128196; {{ f.name }}</a>
+                <span class="file-size">{{ f.size }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty">Пока нет загруженных спецификаций</div>
+        {% endif %}
+        <div class="footer">Spec Watcher Bot — уведомления в Telegram</div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+            }
+        });
+
+        // auto-submit on file select
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                document.getElementById('submit-btn').textContent = '\u23f3 Загрузка...';
+                document.getElementById('upload-form').submit();
+            }
+        });
+    </script>
+</body>
+</html>
